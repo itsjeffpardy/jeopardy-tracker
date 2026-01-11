@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Jeopardy Score Tracker</title>
 
 <style>
 :root {
-  --jeopardy-blue: #091879;
+  --jeopardy-blue: #0b1c6d;
   --jeopardy-dark: #06124a;
-  --jeopardy-gold: #fc9e18;
+  --jeopardy-gold: #ffd700;
   --correct: #1e7f43;
   --wrong: #8b1d1d;
 }
@@ -18,7 +18,7 @@ body {
   margin: 0;
   background: var(--jeopardy-blue);
   color: var(--jeopardy-gold);
-  font-family: "Korinna", "Swiss 911", "Arial Black", system-ui, sans-serif;
+  font-family: "Arial Black", system-ui, sans-serif;
   text-align: center;
 }
 
@@ -28,7 +28,6 @@ header {
   background: var(--jeopardy-dark);
   padding: 12px;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 h1 {
@@ -36,60 +35,36 @@ h1 {
   font-size: 1.8rem;
 }
 
-#navigation {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.nav-btn {
-  background: var(--jeopardy-gold);
-  color: #000;
-  border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.nav-btn.active {
-  background: #fff;
-}
-
-.page {
-  display: none;
-}
-.page.active {
-  display: block;
+#score {
+  font-size: 1.5rem;
+  margin-top: 6px;
 }
 
 #controls {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   margin-top: 10px;
   flex-wrap: wrap;
 }
 
-button, input {
+button {
+  background: var(--jeopardy-gold);
+  color: #000;
+  border: none;
+  padding: 10px 14px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+input {
   padding: 8px;
   font-size: 1rem;
   border-radius: 6px;
   border: none;
-}
-
-button {
-  background: var(--jeopardy-gold);
-  font-weight: bold;
-  cursor: pointer;
-}
-
-#score {
-  font-size: 1.5rem;
-  margin-top: 8px;
-  font-weight: bold;
+  text-align: center;
 }
 
 table {
@@ -106,32 +81,24 @@ th, td {
   text-align: center;
 }
 
+th {
+  padding: 10px 4px;
+  font-size: 0.9rem;
+}
+
 td {
   height: 70px;
   font-size: 1.2rem;
   cursor: pointer;
+  user-select: none;
 }
 
 td.correct { background: var(--correct); }
 td.wrong { background: var(--wrong); }
 
-#leaderboard {
-  max-width: 800px;
-  margin: 20px auto;
-}
-
-.score-entry {
-  background: var(--jeopardy-dark);
-  border: 2px solid var(--jeopardy-gold);
-  border-radius: 8px;
-  padding: 15px;
-  margin: 10px 0;
-  display: flex;
-  justify-content: space-between;
-}
-
-.no-scores {
-  opacity: 0.7;
+@media (max-width: 600px) {
+  td { height: 60px; font-size: 1rem; }
+  th { font-size: 0.75rem; }
 }
 </style>
 </head>
@@ -140,160 +107,130 @@ td.wrong { background: var(--wrong); }
 
 <header>
   <h1>Jeopardy!</h1>
-  <div id="navigation">
-    <button class="nav-btn active" onclick="showPage(event, 'game')">Play Game</button>
-    <button class="nav-btn" onclick="showPage(event, 'leaderboard')">Leaderboard</button>
-  </div>
-</header>
-
-<!-- GAME PAGE -->
-<div id="gamePage" class="page active">
   <div id="score">Score: $0</div>
 
   <div id="controls">
     <button id="roundToggle">Switch to Double Jeopardy</button>
     <button id="resetScore">Reset Score</button>
-    <input id="playerName" placeholder="Player Name">
-    <input id="episodeDate" placeholder="Episode Air Date">
+    <input id="playerName" type="text" placeholder="Player Name" />
+    <input id="episodeDate" type="date" />
     <button id="submitScore">Submit Final Score</button>
   </div>
+</header>
 
-  <table id="board">
-    <tr>
-      <th>Cat 1</th><th>Cat 2</th><th>Cat 3</th>
-      <th>Cat 4</th><th>Cat 5</th><th>Cat 6</th>
-    </tr>
-  </table>
-</div>
-
-<!-- LEADERBOARD PAGE -->
-<div id="leaderboardPage" class="page">
-  <div id="leaderboard">
-    <h2>All Scores</h2>
-    <div id="scoresList"></div>
-  </div>
-</div>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<table id="board">
+  <tr>
+    <th>Cat 1</th>
+    <th>Cat 2</th>
+    <th>Cat 3</th>
+    <th>Cat 4</th>
+    <th>Cat 5</th>
+    <th>Cat 6</th>
+  </tr>
+</table>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCZNvaM61VH4nEHIT21LWQtZrReUWg6WuE",
-  authDomain: "jeopardy-tracker-b4e23.firebaseapp.com",
-  databaseURL: "https://jeopardy-tracker-b4e23-default-rtdb.firebaseio.com",
-  projectId: "jeopardy-tracker-b4e23"
-};
-
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-const scoresRef = database.ref("scores");
-
-const baseValues = [200,400,600,800,1000];
+/* ======================
+   GAME STATE
+====================== */
+const baseValues = [200, 400, 600, 800, 1000];
 let score = 0;
-let multiplier = 1;
+let isDouble = false;
 
+/* Board memory */
+const singleBoardState = Array(5).fill().map(() => Array(6).fill(0));
+const doubleBoardState = Array(5).fill().map(() => Array(6).fill(0));
+
+/* ======================
+   DOM
+====================== */
 const board = document.getElementById("board");
 const scoreDisplay = document.getElementById("score");
+const toggleButton = document.getElementById("roundToggle");
 
+/* ======================
+   BUILD BOARD
+====================== */
 function buildBoard() {
   board.querySelectorAll("tr:not(:first-child)").forEach(r => r.remove());
 
-  baseValues.forEach(v => {
+  const currentState = isDouble ? doubleBoardState : singleBoardState;
+  const multiplier = isDouble ? 2 : 1;
+
+  baseValues.forEach((value, rowIndex) => {
     const row = document.createElement("tr");
-    for (let i = 0; i < 6; i++) {
+
+    for (let colIndex = 0; colIndex < 6; colIndex++) {
       const cell = document.createElement("td");
-      cell.dataset.base = v;
-      cell.dataset.state = 0;
-      cell.textContent = `$${v * multiplier}`;
-      cell.onclick = () => handleClick(cell);
+      const state = currentState[rowIndex][colIndex];
+
+      cell.textContent = `$${value * multiplier}`;
+      if (state === 1) cell.className = "correct";
+      if (state === 2) cell.className = "wrong";
+
+      cell.onclick = () => handleClick(rowIndex, colIndex);
       row.appendChild(cell);
     }
+
     board.appendChild(row);
   });
 }
 
-function handleClick(cell) {
-  const value = Number(cell.dataset.base) * multiplier;
-  const state = Number(cell.dataset.state);
+/* ======================
+   CLICK HANDLER
+====================== */
+function handleClick(row, col) {
+  const multiplier = isDouble ? 2 : 1;
+  const value = baseValues[row] * multiplier;
+  const stateArray = isDouble ? doubleBoardState : singleBoardState;
+  const currentState = stateArray[row][col];
 
-  if (state === 0) {
+  if (currentState === 0) {
     score += value;
-    cell.className = "correct";
-    cell.dataset.state = 1;
-  } else if (state === 1) {
+    stateArray[row][col] = 1;
+  } else if (currentState === 1) {
     score -= value * 2;
-    cell.className = "wrong";
-    cell.dataset.state = 2;
+    stateArray[row][col] = 2;
   } else {
     score += value;
-    cell.className = "";
-    cell.dataset.state = 0;
+    stateArray[row][col] = 0;
   }
-  scoreDisplay.textContent = `Score: $${score}`;
+
+  updateScore();
+  buildBoard();
 }
 
-document.getElementById("roundToggle").onclick = () => {
-  multiplier = multiplier === 1 ? 2 : 1;
+/* ======================
+   CONTROLS
+====================== */
+toggleButton.onclick = () => {
+  isDouble = !isDouble;
+  toggleButton.textContent = isDouble
+    ? "Switch back to Single Jeopardy"
+    : "Switch to Double Jeopardy";
   buildBoard();
 };
 
 document.getElementById("resetScore").onclick = () => {
   score = 0;
-  scoreDisplay.textContent = "Score: $0";
+  singleBoardState.forEach(r => r.fill(0));
+  doubleBoardState.forEach(r => r.fill(0));
+  updateScore();
   buildBoard();
 };
 
-document.getElementById("submitScore").onclick = () => {
-  const name = playerName.value.trim();
-  const episodeDate = episodeDate.value.trim();
-  if (!name || !episodeDate) return alert("Missing info");
-
-  scoresRef.push({
-    name,
-    score,
-    episodeDate,
-    submittedDate: new Date().toLocaleString(),
-    timestamp: Date.now()
-  });
-
-  score = 0;
-  scoreDisplay.textContent = "Score: $0";
-  buildBoard();
-};
-
-function showPage(e, page) {
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  e.target.classList.add("active");
-
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(page === "game" ? "gamePage" : "leaderboardPage")
-    .classList.add("active");
-
-  if (page === "leaderboard") loadLeaderboard();
+/* ======================
+   HELPERS
+====================== */
+function updateScore() {
+  scoreDisplay.textContent = `Score: $${score}`;
 }
 
-function loadLeaderboard() {
-  const list = document.getElementById("scoresList");
-  scoresRef.once("value", snap => {
-    const data = snap.val();
-    if (!data) {
-      list.innerHTML = '<p class="no-scores">No scores yet.</p>';
-      return;
-    }
-    list.innerHTML = Object.values(data)
-      .sort((a,b) => b.timestamp - a.timestamp)
-      .map(s => `
-        <div class="score-entry">
-          <div>${s.name}<br>${s.episodeDate}</div>
-          <div>$${s.score}</div>
-        </div>
-      `).join("");
-  });
-}
-
+/* ======================
+   INIT
+====================== */
 buildBoard();
+updateScore();
 </script>
 
 </body>
