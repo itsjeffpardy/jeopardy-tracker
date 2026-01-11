@@ -1,25 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jeopardy Score Tracker</title>
 
 <style>
 :root {
-  --jeopardy-blue: #0b1c6d;
+  --jeopardy-blue: #091879;
   --jeopardy-dark: #06124a;
-  --jeopardy-gold: #ffd700;
+  --jeopardy-gold: #fc9e18;
   --correct: #1e7f43;
   --wrong: #8b1d1d;
 }
 
+/* ===== DESKTOP FONT ===== */
 body {
   margin: 0;
   background: var(--jeopardy-blue);
   color: var(--jeopardy-gold);
-  font-family: "Arial Black", system-ui, sans-serif;
+  font-family: "Korinna", "Swiss 911", "Arial Black", system-ui, sans-serif;
   text-align: center;
+}
+
+/* ===== MOBILE FONT OVERRIDE ===== */
+@media (max-width: 600px) {
+  body {
+    font-family: Helvetica, Arial, sans-serif;
+  }
 }
 
 header {
@@ -44,38 +52,43 @@ h1 {
 
 .nav-btn {
   background: var(--jeopardy-gold);
+  color: #000;
   border: none;
-  padding: 8px 16px;
+  padding: 10px 20px;
+  font-size: 1rem;
   font-weight: bold;
-  cursor: pointer;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 .nav-btn.active {
   background: #fff;
 }
 
-.page { display: none; }
-.page.active { display: block; }
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+}
 
 #score {
-  font-size: 1.5rem;
-  margin-top: 6px;
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin: 10px 0;
 }
 
 #controls {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 10px;
   flex-wrap: wrap;
 }
 
 button {
   background: var(--jeopardy-gold);
   border: none;
-  padding: 10px 14px;
-  font-size: 1rem;
+  padding: 10px 16px;
   font-weight: bold;
   border-radius: 6px;
   cursor: pointer;
@@ -83,7 +96,6 @@ button {
 
 input {
   padding: 8px;
-  font-size: 1rem;
   border-radius: 6px;
   border: none;
   text-align: center;
@@ -91,7 +103,7 @@ input {
 
 table {
   border-collapse: collapse;
-  margin: 16px auto;
+  margin: 20px auto;
   width: 95%;
   max-width: 900px;
 }
@@ -100,6 +112,11 @@ th, td {
   border: 2px solid #000;
   background: var(--jeopardy-blue);
   color: var(--jeopardy-gold);
+  text-align: center;
+}
+
+th {
+  padding: 8px;
 }
 
 td {
@@ -111,20 +128,22 @@ td {
 td.correct { background: var(--correct); }
 td.wrong { background: var(--wrong); }
 
-#leaderboard {
-  max-width: 800px;
-  margin: 20px auto;
+/* ===== LEADERBOARD TABLE ===== */
+#leaderboard table {
+  width: 95%;
+  max-width: 900px;
 }
 
-.score-entry {
+#leaderboard th {
   background: var(--jeopardy-dark);
-  border: 2px solid var(--jeopardy-gold);
-  border-radius: 8px;
-  padding: 12px;
-  margin: 10px 0;
-  display: flex;
-  justify-content: space-between;
+  font-size: 1rem;
 }
+
+#leaderboard td {
+  font-size: 1rem;
+  cursor: default;
+}
+
 </style>
 </head>
 
@@ -146,7 +165,7 @@ td.wrong { background: var(--wrong); }
     <button id="roundToggle">Switch to Double Jeopardy</button>
     <button id="resetScore">Reset Score</button>
     <input id="playerName" placeholder="Player Name">
-    <input id="episodeDate" type="date">
+    <input id="episodeDate" placeholder="Episode Date">
     <button id="submitScore">Submit Final Score</button>
   </div>
 
@@ -161,141 +180,148 @@ td.wrong { background: var(--wrong); }
 <!-- LEADERBOARD PAGE -->
 <div id="leaderboardPage" class="page">
   <div id="leaderboard">
-    <h2>All Scores</h2>
-    <div id="scoresList"></div>
+    <h2>Leaderboard</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Score</th>
+          <th>Episode</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody id="scoresTable"></tbody>
+    </table>
   </div>
 </div>
 
-<!-- Firebase -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-/* ======================
-   FIREBASE
-====================== */
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyCZNvaM61VH4nEHIT21LWQtZrReUWg6WuE",
   authDomain: "jeopardy-tracker-b4e23.firebaseapp.com",
   databaseURL: "https://jeopardy-tracker-b4e23-default-rtdb.firebaseio.com",
   projectId: "jeopardy-tracker-b4e23"
-});
+};
 
-const scoresRef = firebase.database().ref("scores");
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const scoresRef = db.ref("scores");
 
-/* ======================
-   GAME STATE
-====================== */
-const baseValues = [200, 400, 600, 800, 1000];
+const baseValues = [200,400,600,800,1000];
 let score = 0;
-let isDouble = false;
-
-const singleBoard = Array.from({length:5},()=>Array(6).fill(0));
-const doubleBoard = Array.from({length:5},()=>Array(6).fill(0));
+let multiplier = 1;
+let boardState = {1:[], 2:[]};
 
 const board = document.getElementById("board");
 const scoreDisplay = document.getElementById("score");
-const toggleBtn = document.getElementById("roundToggle");
 
-/* ======================
-   BOARD
-====================== */
 function buildBoard() {
-  board.querySelectorAll("tr:not(:first-child)").forEach(r=>r.remove());
-  const state = isDouble ? doubleBoard : singleBoard;
-  const mult = isDouble ? 2 : 1;
+  board.querySelectorAll("tr:not(:first-child)").forEach(r => r.remove());
 
-  baseValues.forEach((v,r)=>{
-    const row=document.createElement("tr");
-    for(let c=0;c<6;c++){
-      const cell=document.createElement("td");
-      cell.textContent=`$${v*mult}`;
-      if(state[r][c]===1) cell.className="correct";
-      if(state[r][c]===2) cell.className="wrong";
-      cell.onclick=()=>handleClick(r,c);
-      row.appendChild(cell);
+  baseValues.forEach((val,rowIdx) => {
+    const row = document.createElement("tr");
+    for(let col=0; col<6; col++){
+      const td = document.createElement("td");
+      const state = boardState[multiplier][rowIdx]?.[col] ?? 0;
+
+      td.dataset.base = val;
+      td.dataset.row = rowIdx;
+      td.dataset.col = col;
+      td.dataset.state = state;
+      td.textContent = "$" + (val * multiplier);
+      if(state===1) td.className="correct";
+      if(state===2) td.className="wrong";
+
+      td.onclick = () => handleClick(td);
+      row.appendChild(td);
     }
     board.appendChild(row);
   });
 }
 
-function handleClick(r,c){
-  const state=isDouble?doubleBoard:singleBoard;
-  const mult=isDouble?2:1;
-  const value=baseValues[r]*mult;
+function handleClick(cell){
+  const value = Number(cell.dataset.base) * multiplier;
+  let state = Number(cell.dataset.state);
 
-  if(state[r][c]===0){ score+=value; state[r][c]=1; }
-  else if(state[r][c]===1){ score-=value*2; state[r][c]=2; }
-  else { score+=value; state[r][c]=0; }
+  if(state===0){ score+=value; state=1; cell.className="correct"; }
+  else if(state===1){ score-=value*2; state=2; cell.className="wrong"; }
+  else{ score+=value; state=0; cell.className=""; }
+
+  cell.dataset.state = state;
+  const r = cell.dataset.row;
+  const c = cell.dataset.col;
+  boardState[multiplier][r] ??= [];
+  boardState[multiplier][r][c] = state;
 
   updateScore();
-  buildBoard();
 }
-
-toggleBtn.onclick=()=>{
-  isDouble=!isDouble;
-  toggleBtn.textContent=isDouble
-    ?"Switch back to Single Jeopardy"
-    :"Switch to Double Jeopardy";
-  buildBoard();
-};
-
-document.getElementById("resetScore").onclick=()=>{
-  score=0;
-  singleBoard.forEach(r=>r.fill(0));
-  doubleBoard.forEach(r=>r.fill(0));
-  updateScore();
-  buildBoard();
-};
 
 function updateScore(){
-  scoreDisplay.textContent=`Score: $${score}`;
+  scoreDisplay.textContent = "Score: $" + score;
 }
 
-/* ======================
-   SUBMIT + LEADERBOARD
-====================== */
-document.getElementById("submitScore").onclick=()=>{
-  const name=document.getElementById("playerName").value.trim();
-  const episode=document.getElementById("episodeDate").value;
-  if(!name||!episode){ alert("Enter name and episode date"); return; }
+document.getElementById("roundToggle").onclick = () => {
+  multiplier = multiplier===1 ? 2 : 1;
+  document.getElementById("roundToggle").textContent =
+    multiplier===1 ? "Switch to Double Jeopardy" : "Switch Back to Single Jeopardy";
+  buildBoard();
+};
+
+document.getElementById("resetScore").onclick = () => {
+  score = 0;
+  boardState = {1:[],2:[]};
+  updateScore();
+  buildBoard();
+};
+
+document.getElementById("submitScore").onclick = () => {
+  const name = playerName.value.trim();
+  const ep = episodeDate.value.trim();
+  if(!name || !ep) return alert("Missing info");
 
   scoresRef.push({
-    name, score, episode,
-    timestamp: Date.now()
+    name,
+    score,
+    episode: ep,
+    submitted: new Date().toLocaleString(),
+    ts: Date.now()
   });
 
   alert("Score submitted!");
 };
 
-function loadLeaderboard(){
-  const list=document.getElementById("scoresList");
-  list.innerHTML="Loading...";
-  scoresRef.once("value",snap=>{
-    const data=snap.val();
-    if(!data){ list.innerHTML="No scores yet."; return; }
-
-    list.innerHTML=Object.values(data)
-      .sort((a,b)=>b.timestamp-a.timestamp)
-      .map(s=>`
-        <div class="score-entry">
-          <div>${s.name}<br>Episode: ${s.episode}</div>
-          <div>$${s.score}</div>
-        </div>
-      `).join("");
-  });
-}
-
-/* ======================
-   NAV
-====================== */
-function showPage(page,e){
+function showPage(page, e){
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
   e.target.classList.add("active");
 
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.getElementById(page+"Page").classList.add("active");
+
   if(page==="leaderboard") loadLeaderboard();
+}
+
+function loadLeaderboard(){
+  scoresRef.once("value", snap=>{
+    const tbody = document.getElementById("scoresTable");
+    tbody.innerHTML = "";
+    const data = Object.values(snap.val()||{}).sort((a,b)=>b.ts-a.ts);
+
+    data.forEach((s,i)=>{
+      tbody.innerHTML += `
+        <tr>
+          <td>${i+1}</td>
+          <td>${s.name}</td>
+          <td>${s.score}</td>
+          <td>${s.episode}</td>
+          <td>${s.submitted}</td>
+        </tr>`;
+    });
+  });
 }
 
 buildBoard();
