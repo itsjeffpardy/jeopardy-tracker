@@ -9,12 +9,12 @@
 :root {
   --jeopardy-blue: #091879;
   --jeopardy-dark: #06124a;
-  --jeopardy-gold: #fc9e18;
+  --jeopardy-gold: #ffb000; /* BRIGHTER GOLD */
   --correct: #1e7f43;
   --wrong: #8b1d1d;
 }
 
-/* ===== DESKTOP FONT ===== */
+/* Desktop font */
 body {
   margin: 0;
   background: var(--jeopardy-blue);
@@ -23,7 +23,7 @@ body {
   text-align: center;
 }
 
-/* ===== MOBILE FONT OVERRIDE ===== */
+/* Mobile font */
 @media (max-width: 600px) {
   body {
     font-family: Helvetica, Arial, sans-serif;
@@ -128,22 +128,19 @@ td {
 td.correct { background: var(--correct); }
 td.wrong { background: var(--wrong); }
 
-/* ===== LEADERBOARD TABLE ===== */
-#leaderboard table {
-  width: 95%;
-  max-width: 900px;
-}
-
+/* Leaderboard */
 #leaderboard th {
   background: var(--jeopardy-dark);
-  font-size: 1rem;
+  cursor: pointer;
 }
 
 #leaderboard td {
-  font-size: 1rem;
   cursor: default;
 }
 
+#exportBtn {
+  margin-bottom: 10px;
+}
 </style>
 </head>
 
@@ -181,14 +178,15 @@ td.wrong { background: var(--wrong); }
 <div id="leaderboardPage" class="page">
   <div id="leaderboard">
     <h2>Leaderboard</h2>
+    <button id="exportBtn">Export CSV</button>
     <table>
       <thead>
         <tr>
-          <th>#</th>
-          <th>Name</th>
-          <th>Score</th>
-          <th>Episode</th>
-          <th>Submitted</th>
+          <th onclick="sortTable('rank')">#</th>
+          <th onclick="sortTable('name')">Name</th>
+          <th onclick="sortTable('score')">Score</th>
+          <th onclick="sortTable('episode')">Episode</th>
+          <th onclick="sortTable('submitted')">Submitted</th>
         </tr>
       </thead>
       <tbody id="scoresTable"></tbody>
@@ -196,7 +194,7 @@ td.wrong { background: var(--wrong); }
   </div>
 </div>
 
-<!-- FIREBASE -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -209,35 +207,32 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const scoresRef = db.ref("scores");
+const scoresRef = firebase.database().ref("scores");
 
 const baseValues = [200,400,600,800,1000];
 let score = 0;
 let multiplier = 1;
-let boardState = {1:[], 2:[]};
+let boardState = {1:[],2:[]};
 
 const board = document.getElementById("board");
 const scoreDisplay = document.getElementById("score");
 
+let leaderboardData = [];
+let sortState = { col: null, asc: true };
+
 function buildBoard() {
   board.querySelectorAll("tr:not(:first-child)").forEach(r => r.remove());
 
-  baseValues.forEach((val,rowIdx) => {
+  baseValues.forEach((val,r) => {
     const row = document.createElement("tr");
-    for(let col=0; col<6; col++){
-      const td = document.createElement("td");
-      const state = boardState[multiplier][rowIdx]?.[col] ?? 0;
-
-      td.dataset.base = val;
-      td.dataset.row = rowIdx;
-      td.dataset.col = col;
-      td.dataset.state = state;
-      td.textContent = "$" + (val * multiplier);
-      if(state===1) td.className="correct";
-      if(state===2) td.className="wrong";
-
-      td.onclick = () => handleClick(td);
+    for(let c=0;c<6;c++){
+      const td=document.createElement("td");
+      const s=boardState[multiplier][r]?.[c]??0;
+      td.dataset.base=val; td.dataset.row=r; td.dataset.col=c; td.dataset.state=s;
+      td.textContent="$"+(val*multiplier);
+      if(s===1)td.className="correct";
+      if(s===2)td.className="wrong";
+      td.onclick=()=>handleClick(td);
       row.appendChild(td);
     }
     board.appendChild(row);
@@ -245,87 +240,97 @@ function buildBoard() {
 }
 
 function handleClick(cell){
-  const value = Number(cell.dataset.base) * multiplier;
-  let state = Number(cell.dataset.state);
-
-  if(state===0){ score+=value; state=1; cell.className="correct"; }
-  else if(state===1){ score-=value*2; state=2; cell.className="wrong"; }
-  else{ score+=value; state=0; cell.className=""; }
-
-  cell.dataset.state = state;
-  const r = cell.dataset.row;
-  const c = cell.dataset.col;
-  boardState[multiplier][r] ??= [];
-  boardState[multiplier][r][c] = state;
-
+  const v=Number(cell.dataset.base)*multiplier;
+  let s=Number(cell.dataset.state);
+  if(s===0){score+=v;s=1;cell.className="correct";}
+  else if(s===1){score-=v*2;s=2;cell.className="wrong";}
+  else{score+=v;s=0;cell.className="";}
+  cell.dataset.state=s;
+  boardState[multiplier][cell.dataset.row]??=[];
+  boardState[multiplier][cell.dataset.row][cell.dataset.col]=s;
   updateScore();
 }
 
-function updateScore(){
-  scoreDisplay.textContent = "Score: $" + score;
-}
+function updateScore(){ scoreDisplay.textContent="Score: $"+score; }
 
-document.getElementById("roundToggle").onclick = () => {
-  multiplier = multiplier===1 ? 2 : 1;
-  document.getElementById("roundToggle").textContent =
-    multiplier===1 ? "Switch to Double Jeopardy" : "Switch Back to Single Jeopardy";
+roundToggle.onclick=()=>{
+  multiplier=multiplier===1?2:1;
+  roundToggle.textContent=multiplier===1?"Switch to Double Jeopardy":"Switch Back to Single Jeopardy";
   buildBoard();
 };
 
-document.getElementById("resetScore").onclick = () => {
-  score = 0;
-  boardState = {1:[],2:[]};
-  updateScore();
-  buildBoard();
+resetScore.onclick=()=>{
+  score=0; boardState={1:[],2:[]};
+  updateScore(); buildBoard();
 };
 
-document.getElementById("submitScore").onclick = () => {
-  const name = playerName.value.trim();
-  const ep = episodeDate.value.trim();
-  if(!name || !ep) return alert("Missing info");
-
+submitScore.onclick=()=>{
+  if(!playerName.value||!episodeDate.value) return alert("Missing info");
   scoresRef.push({
-    name,
+    name:playerName.value,
     score,
-    episode: ep,
-    submitted: new Date().toLocaleString(),
-    ts: Date.now()
+    episode:episodeDate.value,
+    submitted:new Date().toLocaleString(),
+    ts:Date.now()
   });
-
   alert("Score submitted!");
 };
 
-function showPage(page, e){
+function showPage(p,e){
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
   e.target.classList.add("active");
-
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById(page+"Page").classList.add("active");
-
-  if(page==="leaderboard") loadLeaderboard();
+  document.querySelectorAll(".page").forEach(pg=>pg.classList.remove("active"));
+  document.getElementById(p+"Page").classList.add("active");
+  if(p==="leaderboard") loadLeaderboard();
 }
 
 function loadLeaderboard(){
-  scoresRef.once("value", snap=>{
-    const tbody = document.getElementById("scoresTable");
-    tbody.innerHTML = "";
-    const data = Object.values(snap.val()||{}).sort((a,b)=>b.ts-a.ts);
-
-    data.forEach((s,i)=>{
-      tbody.innerHTML += `
-        <tr>
-          <td>${i+1}</td>
-          <td>${s.name}</td>
-          <td>${s.score}</td>
-          <td>${s.episode}</td>
-          <td>${s.submitted}</td>
-        </tr>`;
-    });
+  scoresRef.once("value",snap=>{
+    leaderboardData=Object.values(snap.val()||{});
+    renderLeaderboard();
   });
 }
 
-buildBoard();
-updateScore();
+function renderLeaderboard(){
+  const tb=document.getElementById("scoresTable");
+  tb.innerHTML="";
+  leaderboardData.forEach((s,i)=>{
+    tb.innerHTML+=`
+      <tr>
+        <td>${i+1}</td>
+        <td>${s.name}</td>
+        <td>${s.score}</td>
+        <td>${s.episode}</td>
+        <td>${s.submitted}</td>
+      </tr>`;
+  });
+}
+
+function sortTable(col){
+  sortState.asc = sortState.col===col ? !sortState.asc : true;
+  sortState.col = col;
+
+  leaderboardData.sort((a,b)=>{
+    let x=a[col]??"", y=b[col]??"";
+    if(col==="score") return sortState.asc?x-y:y-x;
+    return sortState.asc?(""+x).localeCompare(""+y):(""+y).localeCompare(""+x);
+  });
+  renderLeaderboard();
+}
+
+document.getElementById("exportBtn").onclick=()=>{
+  let csv="Rank,Name,Score,Episode,Submitted\n";
+  leaderboardData.forEach((s,i)=>{
+    csv+=`${i+1},"${s.name}",${s.score},"${s.episode}","${s.submitted}"\n`;
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="jeopardy_scores.csv";
+  a.click();
+};
+
+buildBoard(); updateScore();
 </script>
 
 </body>
