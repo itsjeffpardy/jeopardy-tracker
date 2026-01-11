@@ -1,316 +1,300 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.2">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeopardy Score Tracker</title>
+
+<style>
+:root {
+  --jeopardy-blue: #091879;
+  --jeopardy-dark: #06124a;
+  --jeopardy-gold: #fc9e18;
+  --correct: #1e7f43;
+  --wrong: #8b1d1d;
+}
+
+body {
+  margin: 0;
+  background: var(--jeopardy-blue);
+  color: var(--jeopardy-gold);
+  font-family: "Korinna", "Swiss 911", "Arial Black", system-ui, sans-serif;
+  text-align: center;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  background: var(--jeopardy-dark);
+  padding: 12px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+h1 {
+  margin: 5px 0;
+  font-size: 1.8rem;
+}
+
+#navigation {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.nav-btn {
+  background: var(--jeopardy-gold);
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.nav-btn.active {
+  background: #fff;
+}
+
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+}
+
+#controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+button, input {
+  padding: 8px;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  background: var(--jeopardy-gold);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#score {
+  font-size: 1.5rem;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 16px auto;
+  width: 95%;
+  max-width: 900px;
+}
+
+th, td {
+  border: 2px solid #000;
+  background: var(--jeopardy-blue);
+  color: var(--jeopardy-gold);
+  text-align: center;
+}
+
+td {
+  height: 70px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+td.correct { background: var(--correct); }
+td.wrong { background: var(--wrong); }
+
+#leaderboard {
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+.score-entry {
+  background: var(--jeopardy-dark);
+  border: 2px solid var(--jeopardy-gold);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.no-scores {
+  opacity: 0.7;
+}
+</style>
 </head>
+
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="en"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1">&lt;title&gt;Jeopardy Score Tracker&lt;/title&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;style&gt;</p>
-<p class="p1">:root {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>--jeopardy-blue: #091879;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>--jeopardy-dark: #06124a;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>--jeopardy-gold: #fc9e18;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>--correct: #1e7f43;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>--wrong: #8b1d1d;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">body {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: var(--jeopardy-blue);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>color: var(--jeopardy-gold);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-family: "Korinna", "Swiss 911", "Arial Black", system-ui, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>text-align: center;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">header {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>position: sticky;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>top: 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: var(--jeopardy-dark);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>padding: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>z-index: 10;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>box-shadow: 0 2px 8px rgba(0,0,0,0.3);</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">h1 {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin: 5px 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-size: 1.8rem;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">#navigation {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>gap: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin-top: 10px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.nav-btn {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: var(--jeopardy-gold);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>color: #000;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border: none;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>padding: 10px 20px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-size: 1rem;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border-radius: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>cursor: pointer;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.nav-btn.active {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: #fff;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.page {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>display: none;</p>
-<p class="p1">}</p>
-<p class="p1">.page.active {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>display: block;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">#controls {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>gap: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin-top: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>flex-wrap: wrap;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">button, input {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>padding: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-size: 1rem;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border-radius: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border: none;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">button {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: var(--jeopardy-gold);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>cursor: pointer;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">#score {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-size: 1.5rem;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin-top: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-weight: bold;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">table {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border-collapse: collapse;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin: 16px auto;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>width: 95%;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>max-width: 900px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">th, td {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border: 2px solid #000;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: var(--jeopardy-blue);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>color: var(--jeopardy-gold);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>text-align: center;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">td {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>height: 70px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>font-size: 1.2rem;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>cursor: pointer;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">td.correct { background: var(--correct); }</p>
-<p class="p1">td.wrong { background: var(--wrong); }</p>
-<p class="p2"><br></p>
-<p class="p1">#leaderboard {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>max-width: 800px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin: 20px auto;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.score-entry {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>background: var(--jeopardy-dark);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border: 2px solid var(--jeopardy-gold);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>border-radius: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>padding: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>margin: 10px 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>justify-content: space-between;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.no-scores {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>opacity: 0.7;</p>
-<p class="p1">}</p>
-<p class="p1">&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;header&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h1&gt;Jeopardy!&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="navigation"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="nav-btn active" onclick="showPage(event, 'game')"&gt;Play Game&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="nav-btn" onclick="showPage(event, 'leaderboard')"&gt;Leaderboard&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p1">&lt;/header&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;!-- GAME PAGE --&gt;</p>
-<p class="p1">&lt;div id="gamePage" class="page active"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="score"&gt;Score: $0&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="controls"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button id="roundToggle"&gt;Switch to Double Jeopardy&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button id="resetScore"&gt;Reset Score&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input id="playerName" placeholder="Player Name"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input id="episodeDate" placeholder="Episode Air Date"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button id="submitScore"&gt;Submit Final Score&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;table id="board"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;tr&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;th&gt;Cat 1&lt;/th&gt;&lt;th&gt;Cat 2&lt;/th&gt;&lt;th&gt;Cat 3&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;th&gt;Cat 4&lt;/th&gt;&lt;th&gt;Cat 5&lt;/th&gt;&lt;th&gt;Cat 6&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/tr&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/table&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;!-- LEADERBOARD PAGE --&gt;</p>
-<p class="p1">&lt;div id="leaderboardPage" class="page"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="leaderboard"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;All Scores&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="scoresList"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;!-- Firebase --&gt;</p>
-<p class="p1">&lt;script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"&gt;&lt;/script&gt;</p>
-<p class="p1">&lt;script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"&gt;&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1">const firebaseConfig = {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>apiKey: "AIzaSyCZNvaM61VH4nEHIT21LWQtZrReUWg6WuE",</p>
-<p class="p1"><span class="Apple-converted-space">  </span>authDomain: "jeopardy-tracker-b4e23.firebaseapp.com",</p>
-<p class="p1"><span class="Apple-converted-space">  </span>databaseURL: "https://jeopardy-tracker-b4e23-default-rtdb.firebaseio.com",</p>
-<p class="p1"><span class="Apple-converted-space">  </span>projectId: "jeopardy-tracker-b4e23"</p>
-<p class="p1">};</p>
-<p class="p2"><br></p>
-<p class="p1">firebase.initializeApp(firebaseConfig);</p>
-<p class="p1">const database = firebase.database();</p>
-<p class="p1">const scoresRef = database.ref("scores");</p>
-<p class="p2"><br></p>
-<p class="p1">const baseValues = [200,400,600,800,1000];</p>
-<p class="p1">let score = 0;</p>
-<p class="p1">let multiplier = 1;</p>
-<p class="p2"><br></p>
-<p class="p1">const board = document.getElementById("board");</p>
-<p class="p1">const scoreDisplay = document.getElementById("score");</p>
-<p class="p2"><br></p>
-<p class="p1">function buildBoard() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>board.querySelectorAll("tr:not(:first-child)").forEach(r =&gt; r.remove());</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>baseValues.forEach(v =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const row = document.createElement("tr");</p>
-<p class="p1"><span class="Apple-converted-space">    </span>for (let i = 0; i &lt; 6; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const cell = document.createElement("td");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cell.dataset.base = v;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cell.dataset.state = 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cell.textContent = `$${v * multiplier}`;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cell.onclick = () =&gt; handleClick(cell);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>row.appendChild(cell);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>board.appendChild(row);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function handleClick(cell) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const value = Number(cell.dataset.base) * multiplier;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const state = Number(cell.dataset.state);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (state === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>score += value;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cell.className = "correct";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cell.dataset.state = 1;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>} else if (state === 1) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>score -= value * 2;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cell.className = "wrong";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cell.dataset.state = 2;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>score += value;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cell.className = "";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>cell.dataset.state = 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>scoreDisplay.textContent = `Score: $${score}`;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">document.getElementById("roundToggle").onclick = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>multiplier = multiplier === 1 ? 2 : 1;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>buildBoard();</p>
-<p class="p1">};</p>
-<p class="p2"><br></p>
-<p class="p1">document.getElementById("resetScore").onclick = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>scoreDisplay.textContent = "Score: $0";</p>
-<p class="p1"><span class="Apple-converted-space">  </span>buildBoard();</p>
-<p class="p1">};</p>
-<p class="p2"><br></p>
-<p class="p1">document.getElementById("submitScore").onclick = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const name = playerName.value.trim();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const episodeDate = episodeDate.value.trim();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (!name || !episodeDate) return alert("Missing info");</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>scoresRef.push({</p>
-<p class="p1"><span class="Apple-converted-space">    </span>name,</p>
-<p class="p1"><span class="Apple-converted-space">    </span>score,</p>
-<p class="p1"><span class="Apple-converted-space">    </span>episodeDate,</p>
-<p class="p1"><span class="Apple-converted-space">    </span>submittedDate: new Date().toLocaleString(),</p>
-<p class="p1"><span class="Apple-converted-space">    </span>timestamp: Date.now()</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>scoreDisplay.textContent = "Score: $0";</p>
-<p class="p1"><span class="Apple-converted-space">  </span>buildBoard();</p>
-<p class="p1">};</p>
-<p class="p2"><br></p>
-<p class="p1">function showPage(e, page) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.querySelectorAll(".nav-btn").forEach(b =&gt; b.classList.remove("active"));</p>
-<p class="p1"><span class="Apple-converted-space">  </span>e.target.classList.add("active");</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.querySelectorAll(".page").forEach(p =&gt; p.classList.remove("active"));</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById(page === "game" ? "gamePage" : "leaderboardPage")</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.classList.add("active");</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (page === "leaderboard") loadLeaderboard();</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">function loadLeaderboard() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const list = document.getElementById("scoresList");</p>
-<p class="p1"><span class="Apple-converted-space">  </span>scoresRef.once("value", snap =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const data = snap.val();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (!data) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>list.innerHTML = '&lt;p class="no-scores"&gt;No scores yet.&lt;/p&gt;';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>list.innerHTML = Object.values(data)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>.sort((a,b) =&gt; b.timestamp - a.timestamp)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>.map(s =&gt; `</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="score-entry"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;${s.name}&lt;br&gt;${s.episodeDate}&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;$${s.score}&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>`).join("");</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">buildBoard();</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+
+<header>
+  <h1>Jeopardy!</h1>
+  <div id="navigation">
+    <button class="nav-btn active" onclick="showPage(event, 'game')">Play Game</button>
+    <button class="nav-btn" onclick="showPage(event, 'leaderboard')">Leaderboard</button>
+  </div>
+</header>
+
+<!-- GAME PAGE -->
+<div id="gamePage" class="page active">
+  <div id="score">Score: $0</div>
+
+  <div id="controls">
+    <button id="roundToggle">Switch to Double Jeopardy</button>
+    <button id="resetScore">Reset Score</button>
+    <input id="playerName" placeholder="Player Name">
+    <input id="episodeDate" placeholder="Episode Air Date">
+    <button id="submitScore">Submit Final Score</button>
+  </div>
+
+  <table id="board">
+    <tr>
+      <th>Cat 1</th><th>Cat 2</th><th>Cat 3</th>
+      <th>Cat 4</th><th>Cat 5</th><th>Cat 6</th>
+    </tr>
+  </table>
+</div>
+
+<!-- LEADERBOARD PAGE -->
+<div id="leaderboardPage" class="page">
+  <div id="leaderboard">
+    <h2>All Scores</h2>
+    <div id="scoresList"></div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCZNvaM61VH4nEHIT21LWQtZrReUWg6WuE",
+  authDomain: "jeopardy-tracker-b4e23.firebaseapp.com",
+  databaseURL: "https://jeopardy-tracker-b4e23-default-rtdb.firebaseio.com",
+  projectId: "jeopardy-tracker-b4e23"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+const scoresRef = database.ref("scores");
+
+const baseValues = [200,400,600,800,1000];
+let score = 0;
+let multiplier = 1;
+
+const board = document.getElementById("board");
+const scoreDisplay = document.getElementById("score");
+
+function buildBoard() {
+  board.querySelectorAll("tr:not(:first-child)").forEach(r => r.remove());
+
+  baseValues.forEach(v => {
+    const row = document.createElement("tr");
+    for (let i = 0; i < 6; i++) {
+      const cell = document.createElement("td");
+      cell.dataset.base = v;
+      cell.dataset.state = 0;
+      cell.textContent = `$${v * multiplier}`;
+      cell.onclick = () => handleClick(cell);
+      row.appendChild(cell);
+    }
+    board.appendChild(row);
+  });
+}
+
+function handleClick(cell) {
+  const value = Number(cell.dataset.base) * multiplier;
+  const state = Number(cell.dataset.state);
+
+  if (state === 0) {
+    score += value;
+    cell.className = "correct";
+    cell.dataset.state = 1;
+  } else if (state === 1) {
+    score -= value * 2;
+    cell.className = "wrong";
+    cell.dataset.state = 2;
+  } else {
+    score += value;
+    cell.className = "";
+    cell.dataset.state = 0;
+  }
+  scoreDisplay.textContent = `Score: $${score}`;
+}
+
+document.getElementById("roundToggle").onclick = () => {
+  multiplier = multiplier === 1 ? 2 : 1;
+  buildBoard();
+};
+
+document.getElementById("resetScore").onclick = () => {
+  score = 0;
+  scoreDisplay.textContent = "Score: $0";
+  buildBoard();
+};
+
+document.getElementById("submitScore").onclick = () => {
+  const name = playerName.value.trim();
+  const episodeDate = episodeDate.value.trim();
+  if (!name || !episodeDate) return alert("Missing info");
+
+  scoresRef.push({
+    name,
+    score,
+    episodeDate,
+    submittedDate: new Date().toLocaleString(),
+    timestamp: Date.now()
+  });
+
+  score = 0;
+  scoreDisplay.textContent = "Score: $0";
+  buildBoard();
+};
+
+function showPage(e, page) {
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  e.target.classList.add("active");
+
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(page === "game" ? "gamePage" : "leaderboardPage")
+    .classList.add("active");
+
+  if (page === "leaderboard") loadLeaderboard();
+}
+
+function loadLeaderboard() {
+  const list = document.getElementById("scoresList");
+  scoresRef.once("value", snap => {
+    const data = snap.val();
+    if (!data) {
+      list.innerHTML = '<p class="no-scores">No scores yet.</p>';
+      return;
+    }
+    list.innerHTML = Object.values(data)
+      .sort((a,b) => b.timestamp - a.timestamp)
+      .map(s => `
+        <div class="score-entry">
+          <div>${s.name}<br>${s.episodeDate}</div>
+          <div>$${s.score}</div>
+        </div>
+      `).join("");
+  });
+}
+
+buildBoard();
+</script>
+
 </body>
 </html>
