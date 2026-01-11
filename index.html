@@ -35,6 +35,29 @@ h1 {
   font-size: 1.8rem;
 }
 
+#navigation {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.nav-btn {
+  background: var(--jeopardy-gold);
+  border: none;
+  padding: 8px 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.nav-btn.active {
+  background: #fff;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
 #score {
   font-size: 1.5rem;
   margin-top: 6px;
@@ -50,7 +73,6 @@ h1 {
 
 button {
   background: var(--jeopardy-gold);
-  color: #000;
   border: none;
   padding: 10px 14px;
   font-size: 1rem;
@@ -78,27 +100,30 @@ th, td {
   border: 2px solid #000;
   background: var(--jeopardy-blue);
   color: var(--jeopardy-gold);
-  text-align: center;
-}
-
-th {
-  padding: 10px 4px;
-  font-size: 0.9rem;
 }
 
 td {
   height: 70px;
   font-size: 1.2rem;
   cursor: pointer;
-  user-select: none;
 }
 
 td.correct { background: var(--correct); }
 td.wrong { background: var(--wrong); }
 
-@media (max-width: 600px) {
-  td { height: 60px; font-size: 1rem; }
-  th { font-size: 0.75rem; }
+#leaderboard {
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+.score-entry {
+  background: var(--jeopardy-dark);
+  border: 2px solid var(--jeopardy-gold);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
 }
 </style>
 </head>
@@ -107,29 +132,57 @@ td.wrong { background: var(--wrong); }
 
 <header>
   <h1>Jeopardy!</h1>
+  <div id="navigation">
+    <button class="nav-btn active" onclick="showPage('game', event)">Play Game</button>
+    <button class="nav-btn" onclick="showPage('leaderboard', event)">Leaderboard</button>
+  </div>
+</header>
+
+<!-- GAME PAGE -->
+<div id="gamePage" class="page active">
   <div id="score">Score: $0</div>
 
   <div id="controls">
     <button id="roundToggle">Switch to Double Jeopardy</button>
     <button id="resetScore">Reset Score</button>
-    <input id="playerName" type="text" placeholder="Player Name" />
-    <input id="episodeDate" type="date" />
+    <input id="playerName" placeholder="Player Name">
+    <input id="episodeDate" type="date">
     <button id="submitScore">Submit Final Score</button>
   </div>
-</header>
 
-<table id="board">
-  <tr>
-    <th>Cat 1</th>
-    <th>Cat 2</th>
-    <th>Cat 3</th>
-    <th>Cat 4</th>
-    <th>Cat 5</th>
-    <th>Cat 6</th>
-  </tr>
-</table>
+  <table id="board">
+    <tr>
+      <th>Cat 1</th><th>Cat 2</th><th>Cat 3</th>
+      <th>Cat 4</th><th>Cat 5</th><th>Cat 6</th>
+    </tr>
+  </table>
+</div>
+
+<!-- LEADERBOARD PAGE -->
+<div id="leaderboardPage" class="page">
+  <div id="leaderboard">
+    <h2>All Scores</h2>
+    <div id="scoresList"></div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
+/* ======================
+   FIREBASE
+====================== */
+firebase.initializeApp({
+  apiKey: "AIzaSyCZNvaM61VH4nEHIT21LWQtZrReUWg6WuE",
+  authDomain: "jeopardy-tracker-b4e23.firebaseapp.com",
+  databaseURL: "https://jeopardy-tracker-b4e23-default-rtdb.firebaseio.com",
+  projectId: "jeopardy-tracker-b4e23"
+});
+
+const scoresRef = firebase.database().ref("scores");
+
 /* ======================
    GAME STATE
 ====================== */
@@ -137,98 +190,114 @@ const baseValues = [200, 400, 600, 800, 1000];
 let score = 0;
 let isDouble = false;
 
-/* Board memory */
-const singleBoardState = Array(5).fill().map(() => Array(6).fill(0));
-const doubleBoardState = Array(5).fill().map(() => Array(6).fill(0));
+const singleBoard = Array.from({length:5},()=>Array(6).fill(0));
+const doubleBoard = Array.from({length:5},()=>Array(6).fill(0));
 
-/* ======================
-   DOM
-====================== */
 const board = document.getElementById("board");
 const scoreDisplay = document.getElementById("score");
-const toggleButton = document.getElementById("roundToggle");
+const toggleBtn = document.getElementById("roundToggle");
 
 /* ======================
-   BUILD BOARD
+   BOARD
 ====================== */
 function buildBoard() {
-  board.querySelectorAll("tr:not(:first-child)").forEach(r => r.remove());
+  board.querySelectorAll("tr:not(:first-child)").forEach(r=>r.remove());
+  const state = isDouble ? doubleBoard : singleBoard;
+  const mult = isDouble ? 2 : 1;
 
-  const currentState = isDouble ? doubleBoardState : singleBoardState;
-  const multiplier = isDouble ? 2 : 1;
-
-  baseValues.forEach((value, rowIndex) => {
-    const row = document.createElement("tr");
-
-    for (let colIndex = 0; colIndex < 6; colIndex++) {
-      const cell = document.createElement("td");
-      const state = currentState[rowIndex][colIndex];
-
-      cell.textContent = `$${value * multiplier}`;
-      if (state === 1) cell.className = "correct";
-      if (state === 2) cell.className = "wrong";
-
-      cell.onclick = () => handleClick(rowIndex, colIndex);
+  baseValues.forEach((v,r)=>{
+    const row=document.createElement("tr");
+    for(let c=0;c<6;c++){
+      const cell=document.createElement("td");
+      cell.textContent=`$${v*mult}`;
+      if(state[r][c]===1) cell.className="correct";
+      if(state[r][c]===2) cell.className="wrong";
+      cell.onclick=()=>handleClick(r,c);
       row.appendChild(cell);
     }
-
     board.appendChild(row);
   });
 }
 
-/* ======================
-   CLICK HANDLER
-====================== */
-function handleClick(row, col) {
-  const multiplier = isDouble ? 2 : 1;
-  const value = baseValues[row] * multiplier;
-  const stateArray = isDouble ? doubleBoardState : singleBoardState;
-  const currentState = stateArray[row][col];
+function handleClick(r,c){
+  const state=isDouble?doubleBoard:singleBoard;
+  const mult=isDouble?2:1;
+  const value=baseValues[r]*mult;
 
-  if (currentState === 0) {
-    score += value;
-    stateArray[row][col] = 1;
-  } else if (currentState === 1) {
-    score -= value * 2;
-    stateArray[row][col] = 2;
-  } else {
-    score += value;
-    stateArray[row][col] = 0;
-  }
+  if(state[r][c]===0){ score+=value; state[r][c]=1; }
+  else if(state[r][c]===1){ score-=value*2; state[r][c]=2; }
+  else { score+=value; state[r][c]=0; }
 
   updateScore();
   buildBoard();
 }
 
-/* ======================
-   CONTROLS
-====================== */
-toggleButton.onclick = () => {
-  isDouble = !isDouble;
-  toggleButton.textContent = isDouble
-    ? "Switch back to Single Jeopardy"
-    : "Switch to Double Jeopardy";
+toggleBtn.onclick=()=>{
+  isDouble=!isDouble;
+  toggleBtn.textContent=isDouble
+    ?"Switch back to Single Jeopardy"
+    :"Switch to Double Jeopardy";
   buildBoard();
 };
 
-document.getElementById("resetScore").onclick = () => {
-  score = 0;
-  singleBoardState.forEach(r => r.fill(0));
-  doubleBoardState.forEach(r => r.fill(0));
+document.getElementById("resetScore").onclick=()=>{
+  score=0;
+  singleBoard.forEach(r=>r.fill(0));
+  doubleBoard.forEach(r=>r.fill(0));
   updateScore();
   buildBoard();
 };
 
-/* ======================
-   HELPERS
-====================== */
-function updateScore() {
-  scoreDisplay.textContent = `Score: $${score}`;
+function updateScore(){
+  scoreDisplay.textContent=`Score: $${score}`;
 }
 
 /* ======================
-   INIT
+   SUBMIT + LEADERBOARD
 ====================== */
+document.getElementById("submitScore").onclick=()=>{
+  const name=document.getElementById("playerName").value.trim();
+  const episode=document.getElementById("episodeDate").value;
+  if(!name||!episode){ alert("Enter name and episode date"); return; }
+
+  scoresRef.push({
+    name, score, episode,
+    timestamp: Date.now()
+  });
+
+  alert("Score submitted!");
+};
+
+function loadLeaderboard(){
+  const list=document.getElementById("scoresList");
+  list.innerHTML="Loading...";
+  scoresRef.once("value",snap=>{
+    const data=snap.val();
+    if(!data){ list.innerHTML="No scores yet."; return; }
+
+    list.innerHTML=Object.values(data)
+      .sort((a,b)=>b.timestamp-a.timestamp)
+      .map(s=>`
+        <div class="score-entry">
+          <div>${s.name}<br>Episode: ${s.episode}</div>
+          <div>$${s.score}</div>
+        </div>
+      `).join("");
+  });
+}
+
+/* ======================
+   NAV
+====================== */
+function showPage(page,e){
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(page+"Page").classList.add("active");
+  if(page==="leaderboard") loadLeaderboard();
+}
+
 buildBoard();
 updateScore();
 </script>
